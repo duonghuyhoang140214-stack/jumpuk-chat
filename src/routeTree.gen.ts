@@ -15,6 +15,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated.app.profile'
 import { Route as AuthenticatedAppFriendsRouteImport } from './routes/_authenticated.app.friends'
+import { Route as AuthenticatedAppChatConvIdRouteImport } from './routes/_authenticated.app.chat.$convId'
+import { Route as AuthenticatedAppCallConvIdRouteImport } from './routes/_authenticated.app.call.$convId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -45,6 +47,18 @@ const AuthenticatedAppFriendsRoute = AuthenticatedAppFriendsRouteImport.update({
   path: '/app/friends',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppChatConvIdRoute =
+  AuthenticatedAppChatConvIdRouteImport.update({
+    id: '/app/chat/$convId',
+    path: '/app/chat/$convId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppCallConvIdRoute =
+  AuthenticatedAppCallConvIdRouteImport.update({
+    id: '/app/call/$convId',
+    path: '/app/call/$convId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +66,8 @@ export interface FileRoutesByFullPath {
   '/app/friends': typeof AuthenticatedAppFriendsRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/call/$convId': typeof AuthenticatedAppCallConvIdRoute
+  '/app/chat/$convId': typeof AuthenticatedAppChatConvIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +75,8 @@ export interface FileRoutesByTo {
   '/app/friends': typeof AuthenticatedAppFriendsRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/call/$convId': typeof AuthenticatedAppCallConvIdRoute
+  '/app/chat/$convId': typeof AuthenticatedAppChatConvIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +86,28 @@ export interface FileRoutesById {
   '/_authenticated/app/friends': typeof AuthenticatedAppFriendsRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/call/$convId': typeof AuthenticatedAppCallConvIdRoute
+  '/_authenticated/app/chat/$convId': typeof AuthenticatedAppChatConvIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/app/friends' | '/app/profile' | '/app/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/app/friends'
+    | '/app/profile'
+    | '/app/'
+    | '/app/call/$convId'
+    | '/app/chat/$convId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app/friends' | '/app/profile' | '/app'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/friends'
+    | '/app/profile'
+    | '/app'
+    | '/app/call/$convId'
+    | '/app/chat/$convId'
   id:
     | '__root__'
     | '/'
@@ -82,6 +116,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/friends'
     | '/_authenticated/app/profile'
     | '/_authenticated/app/'
+    | '/_authenticated/app/call/$convId'
+    | '/_authenticated/app/chat/$convId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,6 +170,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppFriendsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/chat/$convId': {
+      id: '/_authenticated/app/chat/$convId'
+      path: '/app/chat/$convId'
+      fullPath: '/app/chat/$convId'
+      preLoaderRoute: typeof AuthenticatedAppChatConvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/call/$convId': {
+      id: '/_authenticated/app/call/$convId'
+      path: '/app/call/$convId'
+      fullPath: '/app/call/$convId'
+      preLoaderRoute: typeof AuthenticatedAppCallConvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -141,12 +191,16 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAppFriendsRoute: typeof AuthenticatedAppFriendsRoute
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppCallConvIdRoute: typeof AuthenticatedAppCallConvIdRoute
+  AuthenticatedAppChatConvIdRoute: typeof AuthenticatedAppChatConvIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppFriendsRoute: AuthenticatedAppFriendsRoute,
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppCallConvIdRoute: AuthenticatedAppCallConvIdRoute,
+  AuthenticatedAppChatConvIdRoute: AuthenticatedAppChatConvIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
