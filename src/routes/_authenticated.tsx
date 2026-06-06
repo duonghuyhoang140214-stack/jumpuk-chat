@@ -1,13 +1,13 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { PigLogo } from "@/components/PigLogo";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  component: Index,
+  component: Protected,
 });
 
-function Index() {
+function Protected() {
   const { user, loading } = useAuth();
   if (loading) {
     return (
@@ -16,5 +16,6 @@ function Index() {
       </div>
     );
   }
-  return <Navigate to={user ? "/app" : "/auth"} replace />;
+  if (!user) return <Navigate to="/auth" replace />;
+  return <Outlet />;
 }
