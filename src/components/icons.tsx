@@ -136,3 +136,21 @@ export const MicMuteIcon = ({ size, ...p }: IconProps) => (
     <path d="M3 3l18 18" />
   </svg>
 );
+export const MenuIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <path d="M3 6h18M3 12h18M3 18h18" />
+  </svg>
+);
+export const UsersIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <circle cx="9" cy="8" r="4" />
+    <path d="M2 21a7 7 0 0 1 14 0" />
+    <circle cx="17" cy="9" r="3" />
+    <path d="M22 21a5 5 0 0 0-7-4.5" />
+  </svg>
+);
+export const PenIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <path d="M14 4l6 6L9 21H3v-6z" />
+  </svg>
+);

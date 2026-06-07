@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Avatar } from "@/components/Avatar";
 import {
   PhoneIcon, MicIcon, MicMuteIcon, SpeakerIcon,
-  HeartIcon, BombIcon, ThumbUpIcon, ThumbDownIcon, CloseIcon,
+  HeartIcon, BombIcon, ThumbUpIcon, ThumbDownIcon, UsersIcon,
 } from "@/components/icons";
 import { toast } from "sonner";
 
@@ -16,11 +16,13 @@ export const Route = createFileRoute("/_authenticated/app/call/$convId")({
 });
 
 const REACTIONS = [
-  { id: "heart", Icon: HeartIcon, color: "text-pink-400", emoji: "❤️" },
-  { id: "bomb", Icon: BombIcon, color: "text-foreground", emoji: "💣" },
-  { id: "like", Icon: ThumbUpIcon, color: "text-blue-400", emoji: "👍" },
-  { id: "dislike", Icon: ThumbDownIcon, color: "text-orange-400", emoji: "👎" },
+  { id: "heart", Icon: HeartIcon, color: "text-pink-400" },
+  { id: "bomb", Icon: BombIcon, color: "text-foreground" },
+  { id: "like", Icon: ThumbUpIcon, color: "text-blue-400" },
+  { id: "dislike", Icon: ThumbDownIcon, color: "text-orange-400" },
 ] as const;
+
+const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 interface FloatReaction { id: string; type: string; left: number; }
 
@@ -28,32 +30,65 @@ function CallRoom() {
   const { convId } = Route.useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<"calling" | "connected" | "ended">("calling");
   const [muted, setMuted] = useState(false);
   const [speaker, setSpeaker] = useState(true);
   const [seconds, setSeconds] = useState(0);
   const [floats, setFloats] = useState<FloatReaction[]>([]);
+  /** map of peerId -> "connecting" | "connected" */
+  const [peerState, setPeerState] = useState<Record<string, string>>({});
 
-  const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const pcsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const audiosRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const channelRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
+  const startedRef = useRef(false);
 
-  const { data: other } = useQuery({
-    queryKey: ["call-other", convId],
+  const { data: convMeta } = useQuery({
+    queryKey: ["call-meta", convId],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: conv } = await supabase.from("conversations").select("is_group, name").eq("id", convId).maybeSingle();
+      const { data: members } = await supabase
         .from("conversation_members")
         .select("user_id, profiles:profiles!conversation_members_user_id_fkey(id,display_name,avatar_url)")
-        .eq("conversation_id", convId)
-        .neq("user_id", user!.id)
-        .maybeSingle();
-      return (data as any)?.profiles ?? null;
+        .eq("conversation_id", convId);
+      return { conv, members: members ?? [] };
     },
   });
 
+  const isGroup = !!convMeta?.conv?.is_group;
+  const others = useMemo(() => (convMeta?.members ?? []).filter((m: any) => m.user_id !== user!.id), [convMeta, user]);
+
+  const ensurePc = (peerId: string) => {
+    if (pcsRef.current.has(peerId)) return pcsRef.current.get(peerId)!;
+    const pc = new RTCPeerConnection(ICE);
+    pcsRef.current.set(peerId, pc);
+    localStreamRef.current?.getTracks().forEach((t) => pc.addTrack(t, localStreamRef.current!));
+    pc.onicecandidate = (e) => {
+      if (e.candidate) channelRef.current?.send({ type: "broadcast", event: "ice", payload: { from: user!.id, to: peerId, candidate: e.candidate } });
+    };
+    pc.ontrack = (e) => {
+      let audio = audiosRef.current.get(peerId);
+      if (!audio) {
+        audio = document.createElement("audio");
+        audio.autoplay = true;
+        document.body.appendChild(audio);
+        audiosRef.current.set(peerId, audio);
+      }
+      audio.srcObject = e.streams[0];
+      audio.play().catch(() => {});
+      setPeerState((s) => ({ ...s, [peerId]: "connected" }));
+      if (!startTimeRef.current) startTimeRef.current = Date.now();
+    };
+    pc.onconnectionstatechange = () => {
+      setPeerState((s) => ({ ...s, [peerId]: pc.connectionState }));
+    };
+    return pc;
+  };
+
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     let mounted = true;
 
     const init = async () => {
@@ -61,63 +96,52 @@ function CallRoom() {
       if (!stream) { toast.error("Không thể truy cập micro"); navigate({ to: "/app/chat/$convId", params: { convId } }); return; }
       localStreamRef.current = stream;
 
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-      pcRef.current = pc;
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
-
-      pc.ontrack = (e) => {
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = e.streams[0];
-          remoteAudioRef.current.play().catch(() => {});
-        }
-        if (mounted) {
-          setStatus("connected");
-          startTimeRef.current = Date.now();
-        }
-      };
-
-      // signaling channel
       const ch = supabase.channel(`call-${convId}`, { config: { broadcast: { self: false } } });
       channelRef.current = ch;
 
-      pc.onicecandidate = (e) => {
-        if (e.candidate) ch.send({ type: "broadcast", event: "ice", payload: { from: user!.id, candidate: e.candidate } });
-      };
-
-      ch.on("broadcast", { event: "offer" }, async ({ payload }) => {
+      ch.on("broadcast", { event: "hello" }, async ({ payload }) => {
         if (payload.from === user!.id) return;
+        // I'm already in → I send offer to the new peer
+        const pc = ensurePc(payload.from);
+        setPeerState((s) => ({ ...s, [payload.from]: "connecting" }));
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ch.send({ type: "broadcast", event: "offer", payload: { from: user!.id, to: payload.from, sdp: offer } });
+      });
+      ch.on("broadcast", { event: "offer" }, async ({ payload }) => {
+        if (payload.to !== user!.id) return;
+        const pc = ensurePc(payload.from);
         await pc.setRemoteDescription(payload.sdp);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        ch.send({ type: "broadcast", event: "answer", payload: { from: user!.id, sdp: answer } });
+        ch.send({ type: "broadcast", event: "answer", payload: { from: user!.id, to: payload.from, sdp: answer } });
       });
       ch.on("broadcast", { event: "answer" }, async ({ payload }) => {
-        if (payload.from === user!.id) return;
-        if (pc.signalingState !== "stable") await pc.setRemoteDescription(payload.sdp);
+        if (payload.to !== user!.id) return;
+        const pc = pcsRef.current.get(payload.from);
+        if (pc && pc.signalingState !== "stable") await pc.setRemoteDescription(payload.sdp);
       });
       ch.on("broadcast", { event: "ice" }, async ({ payload }) => {
-        if (payload.from === user!.id) return;
-        try { await pc.addIceCandidate(payload.candidate); } catch {}
+        if (payload.to !== user!.id) return;
+        const pc = pcsRef.current.get(payload.from);
+        try { await pc?.addIceCandidate(payload.candidate); } catch {}
       });
       ch.on("broadcast", { event: "reaction" }, ({ payload }) => {
         if (payload.from === user!.id) return;
         spawnFloat(payload.type);
       });
-      ch.on("broadcast", { event: "hangup" }, () => {
-        cleanup();
-        navigate({ to: "/app/chat/$convId", params: { convId } });
-      });
-      ch.on("broadcast", { event: "hello" }, async ({ payload }) => {
-        if (payload.from === user!.id) return;
-        // peer joined after us → we send offer
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        ch.send({ type: "broadcast", event: "offer", payload: { from: user!.id, sdp: offer } });
+      ch.on("broadcast", { event: "bye" }, ({ payload }) => {
+        const pc = pcsRef.current.get(payload.from);
+        pc?.close();
+        pcsRef.current.delete(payload.from);
+        const a = audiosRef.current.get(payload.from);
+        a?.remove();
+        audiosRef.current.delete(payload.from);
+        setPeerState((s) => { const n = { ...s }; delete n[payload.from]; return n; });
       });
 
       await ch.subscribe(async (st) => {
-        if (st === "SUBSCRIBED") {
-          // announce arrival
+        if (st === "SUBSCRIBED" && mounted) {
           ch.send({ type: "broadcast", event: "hello", payload: { from: user!.id } });
         }
       });
@@ -129,14 +153,19 @@ function CallRoom() {
   }, []);
 
   useEffect(() => {
-    if (status !== "connected") return;
+    const anyConnected = Object.values(peerState).some((s) => s === "connected");
+    if (!anyConnected) return;
     const t = setInterval(() => setSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000)), 500);
     return () => clearInterval(t);
-  }, [status]);
+  }, [peerState]);
 
   const cleanup = () => {
+    channelRef.current?.send({ type: "broadcast", event: "bye", payload: { from: user!.id } });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    pcRef.current?.close();
+    pcsRef.current.forEach((pc) => pc.close());
+    pcsRef.current.clear();
+    audiosRef.current.forEach((a) => a.remove());
+    audiosRef.current.clear();
     if (channelRef.current) supabase.removeChannel(channelRef.current);
   };
 
@@ -152,7 +181,6 @@ function CallRoom() {
   };
 
   const hangup = () => {
-    channelRef.current?.send({ type: "broadcast", event: "hangup", payload: { from: user!.id } });
     cleanup();
     navigate({ to: "/app/chat/$convId", params: { convId } });
   };
@@ -164,10 +192,10 @@ function CallRoom() {
   };
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+  const anyConnected = Object.values(peerState).some((s) => s === "connected");
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-gradient-to-b from-[oklch(0.3_0.1_350)] to-[oklch(0.15_0.05_280)] text-white overflow-hidden relative">
-      {/* floating reactions */}
+    <div className="flex h-[100dvh] flex-col bg-gradient-call text-white overflow-hidden relative">
       <AnimatePresence>
         {floats.map((f) => {
           const r = REACTIONS.find((x) => x.id === f.type)!;
@@ -178,28 +206,51 @@ function CallRoom() {
               animate={{ y: "10vh", opacity: 1, scale: 1.4 }}
               exit={{ opacity: 0, y: "5vh" }}
               transition={{ duration: 2.8, ease: "easeOut" }}
-              className="absolute text-6xl pointer-events-none z-10"
+              className="absolute pointer-events-none z-10"
               style={{ left: `${f.left}%` }}
             >
-              <r.Icon size={60} className={r.color} />
+              <r.Icon size={64} className={r.color} />
             </motion.div>
           );
         })}
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6 z-0">
-        <div className={`${status === "calling" ? "animate-pulse" : ""}`}>
-          <Avatar path={other?.avatar_url} name={other?.display_name} size={160} className="ring-4 ring-white/30" />
-        </div>
-        <h2 className="text-3xl font-bold">{other?.display_name ?? "Đang gọi..."}</h2>
-        <p className="text-white/70">
-          {status === "calling" ? "Đang kết nối..." : status === "connected" ? fmt(seconds) : "Kết thúc"}
-        </p>
+        {isGroup ? (
+          <>
+            <div className="grid place-items-center h-24 w-24 rounded-3xl bg-white/15 backdrop-blur">
+              <UsersIcon size={48} />
+            </div>
+            <h2 className="text-2xl font-bold text-center">{convMeta?.conv?.name ?? "Nhóm"}</h2>
+            <div className="flex flex-wrap items-center justify-center gap-3 max-w-sm">
+              {others.map((m: any) => {
+                const st = peerState[m.user_id];
+                return (
+                  <div key={m.user_id} className="flex flex-col items-center gap-1.5">
+                    <div className={`relative ${st === "connected" ? "" : "opacity-60 animate-pulse"}`}>
+                      <Avatar path={m.profiles?.avatar_url} name={m.profiles?.display_name} size={72} className="ring-2 ring-white/30" />
+                      {st === "connected" && (
+                        <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-400 ring-2 ring-[oklch(0.18_0.06_300)]" />
+                      )}
+                    </div>
+                    <p className="text-xs font-semibold max-w-[80px] truncate">{m.profiles?.display_name}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-white/70 text-sm">{anyConnected ? fmt(seconds) : "Đang kết nối..."}</p>
+          </>
+        ) : (
+          <>
+            <div className={anyConnected ? "" : "animate-pulse"}>
+              <Avatar path={(others[0]?.profiles as any)?.avatar_url} name={(others[0]?.profiles as any)?.display_name} size={160} className="ring-4 ring-white/30" />
+            </div>
+            <h2 className="text-3xl font-bold">{(others[0]?.profiles as any)?.display_name ?? "Đang gọi..."}</h2>
+            <p className="text-white/70">{anyConnected ? fmt(seconds) : "Đang kết nối..."}</p>
+          </>
+        )}
       </div>
 
-      <audio ref={remoteAudioRef} autoPlay />
-
-      {/* mini reaction bar */}
       <div className="z-20 flex justify-center gap-2 pb-2">
         {REACTIONS.map((r) => (
           <button
