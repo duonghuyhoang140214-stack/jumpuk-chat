@@ -45,19 +45,31 @@ export type Database = {
       }
       conversations: {
         Row: {
+          avatar_url: string | null
           created_at: string
+          created_by: string | null
           id: string
+          is_group: boolean
           last_message_at: string
+          name: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
+          is_group?: boolean
           last_message_at?: string
+          name?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
+          is_group?: boolean
           last_message_at?: string
+          name?: string | null
         }
         Relationships: []
       }
@@ -158,6 +170,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_group_member: {
+        Args: { _conv: string; _target: string }
+        Returns: undefined
+      }
+      create_group: {
+        Args: { _member_ids: string[]; _name: string }
+        Returns: string
+      }
       generate_friend_id: { Args: never; Returns: string }
       get_or_create_dm: { Args: { other_user: string }; Returns: string }
       is_conv_member: {
