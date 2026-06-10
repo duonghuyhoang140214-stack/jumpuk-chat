@@ -159,6 +159,59 @@ function CallRoom() {
     return () => clearInterval(t);
   }, [peerState]);
 
+  // Ringtone — Oppo×Samsung×Snapchat lai: 2 chord ấm + ping cao, lặp đến khi kết nối
+  useEffect(() => {
+    const anyConnected = Object.values(peerState).some((s) => s === "connected");
+    if (anyConnected) return;
+    let ctx: AudioContext | null = null;
+    let stopped = false;
+    let timer: any;
+    try {
+      ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch { return; }
+    const master = ctx.createGain();
+    master.gain.value = 0.18;
+    master.connect(ctx.destination);
+
+    const tone = (freq: number, t0: number, dur: number, type: OscillatorType = "sine") => {
+      const o = ctx!.createOscillator();
+      const g = ctx!.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(1, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      o.connect(g).connect(master);
+      o.start(t0); o.stop(t0 + dur + 0.05);
+    };
+
+    const playCycle = () => {
+      if (stopped || !ctx) return;
+      const t = ctx.currentTime;
+      // Chord ấm (Samsung-like): A4 + C#5
+      tone(440, t + 0.00, 0.55);
+      tone(554.37, t + 0.00, 0.55);
+      // Ping cao (Snapchat-like)
+      tone(880, t + 0.18, 0.25, "triangle");
+      tone(1318.5, t + 0.30, 0.18, "triangle");
+      // Echo nhẹ (Oppo-like)
+      tone(659.25, t + 0.65, 0.45);
+      tone(987.77, t + 0.78, 0.30, "triangle");
+    };
+
+    ctx.resume().then(() => {
+      playCycle();
+      timer = setInterval(playCycle, 1800);
+    }).catch(() => {});
+
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+      try { master.gain.cancelScheduledValues(ctx!.currentTime); master.gain.setValueAtTime(0, ctx!.currentTime); } catch {}
+      setTimeout(() => ctx?.close().catch(() => {}), 100);
+    };
+  }, [peerState]);
+
+
   const cleanup = () => {
     channelRef.current?.send({ type: "broadcast", event: "bye", payload: { from: user!.id } });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
