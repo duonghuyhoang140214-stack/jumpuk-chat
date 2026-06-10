@@ -294,6 +294,53 @@ function ChatRoom() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {actionMsg && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end bg-foreground/40 backdrop-blur-sm"
+            onClick={() => setActionMsg(null)}
+          >
+            <motion.div
+              initial={{ y: 180 }} animate={{ y: 0 }} exit={{ y: 180 }}
+              transition={{ type: "spring", damping: 26 }}
+              className="w-full rounded-t-3xl bg-card p-3 safe-bottom"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-muted" />
+              <button
+                onClick={async () => {
+                  const t = actionMsg.type === "text" ? (actionMsg.content ?? "") : `[${actionMsg.type}]`;
+                  try { await navigator.clipboard.writeText(t); toast.success("Đã sao chép"); } catch { toast.error("Không sao chép được"); }
+                  setActionMsg(null);
+                }}
+                className="w-full flex items-center gap-3 rounded-2xl p-3.5 active:bg-secondary"
+              >
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-primary text-lg">⧉</span>
+                <span className="font-bold">Sao chép</span>
+              </button>
+              {actionMsg.sender_id === user!.id && (
+                <button
+                  onClick={async () => {
+                    const id = actionMsg.id;
+                    setActionMsg(null);
+                    const { error } = await supabase.from("messages").delete().eq("id", id);
+                    if (error) { toast.error(error.message); return; }
+                    qc.setQueryData(["messages", convId], (old: any[] = []) => old.filter((x) => x.id !== id));
+                    toast.success("Đã xoá");
+                  }}
+                  className="w-full flex items-center gap-3 rounded-2xl p-3.5 active:bg-secondary text-destructive"
+                >
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-destructive/15 text-lg">🗑</span>
+                  <span className="font-bold">Xoá tin nhắn</span>
+                </button>
+              )}
+              <button onClick={() => setActionMsg(null)} className="w-full mt-1 rounded-2xl p-3 font-bold text-muted-foreground">Huỷ</button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <CreateGroupModal open={addOpen} onClose={() => setAddOpen(false)} addToConvId={convId} excludeIds={excludeIds} />
     </div>
   );
