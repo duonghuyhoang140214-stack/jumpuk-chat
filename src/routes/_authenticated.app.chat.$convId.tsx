@@ -299,14 +299,26 @@ function ChatRoom() {
   );
 }
 
-function MessageBubble({ msg, mine, isGroup, sender, showAvatar, showName }: {
-  msg: any; mine: boolean; isGroup: boolean; sender?: any; showAvatar?: boolean; showName?: boolean;
+function MessageBubble({ msg, mine, isGroup, sender, showAvatar, showName, onLongPress }: {
+  msg: any; mine: boolean; isGroup: boolean; sender?: any; showAvatar?: boolean; showName?: boolean; onLongPress?: () => void;
 }) {
   const mediaUrl = useSignedUrl(msg.media_url, "chat-media");
+  const timerRef = useRef<any>(null);
+  const movedRef = useRef(false);
+  const start = () => {
+    movedRef.current = false;
+    timerRef.current = setTimeout(() => { if (!movedRef.current) { navigator.vibrate?.(30); onLongPress?.(); } }, 450);
+  };
+  const cancel = () => { clearTimeout(timerRef.current); };
   return (
     <motion.div
       initial={{ opacity: 0, y: 6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       className={`flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"}`}
+      onPointerDown={start}
+      onPointerUp={cancel}
+      onPointerMove={() => { movedRef.current = true; }}
+      onPointerLeave={cancel}
+      onContextMenu={(e) => { e.preventDefault(); onLongPress?.(); }}
     >
       {!mine && isGroup && (
         <div className="w-7 shrink-0">
