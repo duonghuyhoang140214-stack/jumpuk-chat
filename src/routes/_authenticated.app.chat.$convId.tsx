@@ -183,6 +183,7 @@ function ChatRoom() {
               sender={senderMap[m.sender_id]}
               showAvatar={showAvatar}
               showName={showName}
+              onLongPress={() => setActionMsg(m)}
             />
           );
         })}
