@@ -26,6 +26,7 @@ function ChatRoom() {
   const [text, setText] = useState("");
   const [drawer, setDrawer] = useState<null | "menu" | "bg">(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [actionMsg, setActionMsg] = useState<any | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileImgRef = useRef<HTMLInputElement>(null);
   const fileVidRef = useRef<HTMLInputElement>(null);
