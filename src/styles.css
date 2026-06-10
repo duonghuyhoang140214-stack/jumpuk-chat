@@ -111,8 +111,23 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
   .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
+  .safe-top { padding-top: max(env(safe-area-inset-top), 0px); }
   .glass {
-    background: color-mix(in oklab, var(--card) 78%, transparent);
-    backdrop-filter: saturate(140%) blur(14px);
+    background: color-mix(in oklab, var(--card) 72%, transparent);
+    backdrop-filter: saturate(160%) blur(18px);
+    -webkit-backdrop-filter: saturate(160%) blur(18px);
   }
+  .glass-strong {
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    backdrop-filter: saturate(180%) blur(22px);
+    -webkit-backdrop-filter: saturate(180%) blur(22px);
+  }
+  .pressable { transition: transform .15s ease, box-shadow .2s ease; }
+  .pressable:active { transform: scale(.96); }
+  .tap-ring { -webkit-tap-highlight-color: transparent; }
 }
+
+@keyframes pop-in { 0% { transform: scale(.6); opacity: 0 } 60% { transform: scale(1.06); opacity: 1 } 100% { transform: scale(1) } }
+@keyframes slide-up { from { transform: translateY(8px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+.animate-pop { animation: pop-in .35s cubic-bezier(.34,1.56,.64,1) both; }
+.animate-slide-up { animation: slide-up .25s ease both; }
