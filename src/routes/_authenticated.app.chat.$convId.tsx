@@ -75,12 +75,17 @@ function ChatRoom() {
   const send = async (extra?: Partial<{ type: string; content: string; media_url: string }>) => {
     const payload = extra ?? { type: "text", content: text.trim() };
     if (payload.type === "text" && !payload.content) return;
-    const { error } = await supabase.from("messages").insert({
+    const { data, error } = await supabase.from("messages").insert({
       conversation_id: convId, sender_id: user!.id,
       type: payload.type as any, content: payload.content, media_url: payload.media_url,
-    });
+    }).select().single();
     if (error) { toast.error(error.message); return; }
     if (!extra) setText("");
+    // Optimistic update — không chờ realtime
+    qc.setQueryData(["messages", convId], (old: any[] = []) => {
+      if (old.some((m) => m.id === data.id)) return old;
+      return [...old, data];
+    });
   };
 
   const uploadAndSend = async (file: File, type: "image" | "video" | "voice") => {
