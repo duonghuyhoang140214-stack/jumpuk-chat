@@ -43,6 +43,8 @@ function CallRoom() {
   const channelRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
   const startedRef = useRef(false);
+  const historyIdRef = useRef<string | null>(null);
+  const historyLoggedRef = useRef(false);
 
   const { data: convMeta } = useQuery({
     queryKey: ["call-meta", convId],
