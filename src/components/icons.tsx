@@ -154,3 +154,39 @@ export const PenIcon = ({ size, ...p }: IconProps) => (
     <path d="M14 4l6 6L9 21H3v-6z" />
   </svg>
 );
+export const SearchIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="M20 20l-3.5-3.5" />
+  </svg>
+);
+export const CompassIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M15 9l-2 6-6 2 2-6z" fill="currentColor" stroke="none" />
+  </svg>
+);
+export const TrashIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+  </svg>
+);
+export const CommentIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <path d="M4 5h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+  </svg>
+);
+export const ShareIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <circle cx="6" cy="12" r="2.5" fill="currentColor" stroke="none" />
+    <circle cx="18" cy="6" r="2.5" fill="currentColor" stroke="none" />
+    <circle cx="18" cy="18" r="2.5" fill="currentColor" stroke="none" />
+    <path d="M8 11l8-4M8 13l8 4" />
+  </svg>
+);
+export const PhoneMissedIcon = ({ size, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2z" fill="currentColor" stroke="none" />
+    <path d="M15 3l6 6M21 3l-6 6" stroke="white" strokeWidth="2.5" />
+  </svg>
+);
