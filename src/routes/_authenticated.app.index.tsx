@@ -7,7 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/lib/auth-context";
 import { PigLogo } from "@/components/PigLogo";
 import { CreateGroupModal } from "@/components/CreateGroupModal";
-import { UsersIcon, PenIcon } from "@/components/icons";
+import { UsersIcon, PenIcon, PhoneIcon } from "@/components/icons";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/app/")({
