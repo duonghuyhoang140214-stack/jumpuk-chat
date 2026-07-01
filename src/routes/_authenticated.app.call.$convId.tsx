@@ -251,7 +251,7 @@ function CallRoom() {
 
   const hangup = () => {
     cleanup();
-    navigate({ to: "/app/chat/$convId", params: { convId } });
+    navigate({ to: "/app/calls" });
   };
 
   const toggleMute = () => {
