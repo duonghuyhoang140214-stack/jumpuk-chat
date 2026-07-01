@@ -43,6 +43,8 @@ function CallRoom() {
   const channelRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
   const startedRef = useRef(false);
+  const historyIdRef = useRef<string | null>(null);
+  const historyLoggedRef = useRef(false);
 
   const { data: convMeta } = useQuery({
     queryKey: ["call-meta", convId],
@@ -220,6 +222,20 @@ function CallRoom() {
     audiosRef.current.forEach((a) => a.remove());
     audiosRef.current.clear();
     if (channelRef.current) supabase.removeChannel(channelRef.current);
+    if (historyLoggedRef.current) return;
+    historyLoggedRef.current = true;
+    const duration = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0;
+    const connected = !!startTimeRef.current;
+    const calleeId = !isGroup ? (others[0] as any)?.user_id ?? null : null;
+    supabase.from("call_history").insert({
+      conversation_id: convId,
+      caller_id: user!.id,
+      callee_id: calleeId,
+      call_type: isGroup ? "group" : "voice",
+      status: connected ? "ended" : "missed",
+      duration_sec: duration,
+      ended_at: new Date().toISOString(),
+    }).then(({ data }: any) => { if (data?.[0]?.id) historyIdRef.current = data[0].id; });
   };
 
   const spawnFloat = (type: string) => {
@@ -235,7 +251,7 @@ function CallRoom() {
 
   const hangup = () => {
     cleanup();
-    navigate({ to: "/app/chat/$convId", params: { convId } });
+    navigate({ to: "/app/calls" });
   };
 
   const toggleMute = () => {

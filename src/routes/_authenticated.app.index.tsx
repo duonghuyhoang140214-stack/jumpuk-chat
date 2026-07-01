@@ -7,7 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/lib/auth-context";
 import { PigLogo } from "@/components/PigLogo";
 import { CreateGroupModal } from "@/components/CreateGroupModal";
-import { UsersIcon, PenIcon } from "@/components/icons";
+import { UsersIcon, PenIcon, PhoneIcon } from "@/components/icons";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/app/")({
@@ -74,6 +74,11 @@ function ChatList() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            <Link
+              to="/app/calls"
+              className="rounded-full bg-secondary p-2.5 text-primary active:scale-95"
+              aria-label="Lịch sử cuộc gọi"
+            ><PhoneIcon size={20} /></Link>
             <button
               onClick={() => setShowGroup(true)}
               className="rounded-full bg-secondary p-2.5 text-primary active:scale-95"
