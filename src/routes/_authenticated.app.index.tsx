@@ -74,6 +74,11 @@ function ChatList() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            <Link
+              to="/app/calls"
+              className="rounded-full bg-secondary p-2.5 text-primary active:scale-95"
+              aria-label="Lịch sử cuộc gọi"
+            ><PhoneIcon size={20} /></Link>
             <button
               onClick={() => setShowGroup(true)}
               className="rounded-full bg-secondary p-2.5 text-primary active:scale-95"
