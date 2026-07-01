@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
-export function useSignedUrl(path: string | null | undefined, bucket: "avatars" | "chat-media") {
+export function useSignedUrl(path: string | null | undefined, bucket: "avatars" | "chat-media" | "stories") {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!path) { setUrl(null); return; }
