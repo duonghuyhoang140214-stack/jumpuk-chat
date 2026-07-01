@@ -13,8 +13,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
+import { Route as AuthenticatedAppStoriesRouteImport } from './routes/_authenticated.app.stories'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated.app.profile'
+import { Route as AuthenticatedAppPostStoryRouteImport } from './routes/_authenticated.app.post-story'
 import { Route as AuthenticatedAppFriendsRouteImport } from './routes/_authenticated.app.friends'
+import { Route as AuthenticatedAppCallsRouteImport } from './routes/_authenticated.app.calls'
+import { Route as AuthenticatedAppUserUserIdRouteImport } from './routes/_authenticated.app.user.$userId'
 import { Route as AuthenticatedAppChatConvIdRouteImport } from './routes/_authenticated.app.chat.$convId'
 import { Route as AuthenticatedAppCallConvIdRouteImport } from './routes/_authenticated.app.call.$convId'
 
@@ -37,16 +41,38 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/app/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppStoriesRoute = AuthenticatedAppStoriesRouteImport.update({
+  id: '/app/stories',
+  path: '/app/stories',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
   id: '/app/profile',
   path: '/app/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppPostStoryRoute =
+  AuthenticatedAppPostStoryRouteImport.update({
+    id: '/app/post-story',
+    path: '/app/post-story',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAppFriendsRoute = AuthenticatedAppFriendsRouteImport.update({
   id: '/app/friends',
   path: '/app/friends',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppCallsRoute = AuthenticatedAppCallsRouteImport.update({
+  id: '/app/calls',
+  path: '/app/calls',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppUserUserIdRoute =
+  AuthenticatedAppUserUserIdRouteImport.update({
+    id: '/app/user/$userId',
+    path: '/app/user/$userId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAppChatConvIdRoute =
   AuthenticatedAppChatConvIdRouteImport.update({
     id: '/app/chat/$convId',
@@ -63,61 +89,85 @@ const AuthenticatedAppCallConvIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/calls': typeof AuthenticatedAppCallsRoute
   '/app/friends': typeof AuthenticatedAppFriendsRoute
+  '/app/post-story': typeof AuthenticatedAppPostStoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
+  '/app/stories': typeof AuthenticatedAppStoriesRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/call/$convId': typeof AuthenticatedAppCallConvIdRoute
   '/app/chat/$convId': typeof AuthenticatedAppChatConvIdRoute
+  '/app/user/$userId': typeof AuthenticatedAppUserUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/calls': typeof AuthenticatedAppCallsRoute
   '/app/friends': typeof AuthenticatedAppFriendsRoute
+  '/app/post-story': typeof AuthenticatedAppPostStoryRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
+  '/app/stories': typeof AuthenticatedAppStoriesRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/call/$convId': typeof AuthenticatedAppCallConvIdRoute
   '/app/chat/$convId': typeof AuthenticatedAppChatConvIdRoute
+  '/app/user/$userId': typeof AuthenticatedAppUserUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/app/calls': typeof AuthenticatedAppCallsRoute
   '/_authenticated/app/friends': typeof AuthenticatedAppFriendsRoute
+  '/_authenticated/app/post-story': typeof AuthenticatedAppPostStoryRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
+  '/_authenticated/app/stories': typeof AuthenticatedAppStoriesRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/call/$convId': typeof AuthenticatedAppCallConvIdRoute
   '/_authenticated/app/chat/$convId': typeof AuthenticatedAppChatConvIdRoute
+  '/_authenticated/app/user/$userId': typeof AuthenticatedAppUserUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/app/calls'
     | '/app/friends'
+    | '/app/post-story'
     | '/app/profile'
+    | '/app/stories'
     | '/app/'
     | '/app/call/$convId'
     | '/app/chat/$convId'
+    | '/app/user/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/app/calls'
     | '/app/friends'
+    | '/app/post-story'
     | '/app/profile'
+    | '/app/stories'
     | '/app'
     | '/app/call/$convId'
     | '/app/chat/$convId'
+    | '/app/user/$userId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/app/calls'
     | '/_authenticated/app/friends'
+    | '/_authenticated/app/post-story'
     | '/_authenticated/app/profile'
+    | '/_authenticated/app/stories'
     | '/_authenticated/app/'
     | '/_authenticated/app/call/$convId'
     | '/_authenticated/app/chat/$convId'
+    | '/_authenticated/app/user/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -156,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/stories': {
+      id: '/_authenticated/app/stories'
+      path: '/app/stories'
+      fullPath: '/app/stories'
+      preLoaderRoute: typeof AuthenticatedAppStoriesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/profile': {
       id: '/_authenticated/app/profile'
       path: '/app/profile'
@@ -163,11 +220,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/post-story': {
+      id: '/_authenticated/app/post-story'
+      path: '/app/post-story'
+      fullPath: '/app/post-story'
+      preLoaderRoute: typeof AuthenticatedAppPostStoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/friends': {
       id: '/_authenticated/app/friends'
       path: '/app/friends'
       fullPath: '/app/friends'
       preLoaderRoute: typeof AuthenticatedAppFriendsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/calls': {
+      id: '/_authenticated/app/calls'
+      path: '/app/calls'
+      fullPath: '/app/calls'
+      preLoaderRoute: typeof AuthenticatedAppCallsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/user/$userId': {
+      id: '/_authenticated/app/user/$userId'
+      path: '/app/user/$userId'
+      fullPath: '/app/user/$userId'
+      preLoaderRoute: typeof AuthenticatedAppUserUserIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/chat/$convId': {
@@ -188,19 +266,27 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAppCallsRoute: typeof AuthenticatedAppCallsRoute
   AuthenticatedAppFriendsRoute: typeof AuthenticatedAppFriendsRoute
+  AuthenticatedAppPostStoryRoute: typeof AuthenticatedAppPostStoryRoute
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
+  AuthenticatedAppStoriesRoute: typeof AuthenticatedAppStoriesRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppCallConvIdRoute: typeof AuthenticatedAppCallConvIdRoute
   AuthenticatedAppChatConvIdRoute: typeof AuthenticatedAppChatConvIdRoute
+  AuthenticatedAppUserUserIdRoute: typeof AuthenticatedAppUserUserIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAppCallsRoute: AuthenticatedAppCallsRoute,
   AuthenticatedAppFriendsRoute: AuthenticatedAppFriendsRoute,
+  AuthenticatedAppPostStoryRoute: AuthenticatedAppPostStoryRoute,
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
+  AuthenticatedAppStoriesRoute: AuthenticatedAppStoriesRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppCallConvIdRoute: AuthenticatedAppCallConvIdRoute,
   AuthenticatedAppChatConvIdRoute: AuthenticatedAppChatConvIdRoute,
+  AuthenticatedAppUserUserIdRoute: AuthenticatedAppUserUserIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
